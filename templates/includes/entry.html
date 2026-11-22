@@ -1,0 +1,12 @@
+<li class="entry">
+    <div class="mini-spine" style="--h: {{ book.spine_hue }}" aria-hidden="true"></div>
+    <div>
+        <h3><a href="{{ book.get_absolute_url }}">{{ book.title }}</a></h3>
+        <p class="by">{{ book.author }}</p>
+        <p class="tags">{% if book.category %}{{ book.category.name }}{% else %}Uncategorised{% endif %}{% if book.published_year %}, {{ book.published_year }}{% endif %}</p>
+    </div>
+    <div class="avail {% if book.available > 0 %}in{% else %}out{% endif %}">
+        {% if book.available > 0 %}<strong>{{ book.available }} of {{ book.total_copies }} in</strong>on the shelf
+        {% else %}<strong>All out</strong>{{ book.total_copies }} cop{{ book.total_copies|pluralize:"y,ies" }} on loan{% endif %}
+    </div>
+</li>

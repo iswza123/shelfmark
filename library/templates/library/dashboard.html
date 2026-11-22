@@ -1,0 +1,91 @@
+{% extends 'base.html' %}
+{% block title %}Desk{% endblock %}
+
+{% block content %}
+<h1>The desk</h1>
+
+<div class="ledger">
+    <div><b>{{ stats.titles }}</b><span>titles</span></div>
+    <div><b>{{ stats.members }}</b><span>members</span></div>
+    <div><b>{{ stats.on_loan }}</b><span>books on loan</span></div>
+    <div {% if stats.overdue %}class="alert"{% endif %}><b>{{ stats.overdue }}</b><span>overdue</span></div>
+    <div {% if stats.unpaid %}class="alert"{% endif %}><b>Rs. {{ stats.unpaid }}</b><span>unpaid fines</span></div>
+</div>
+
+<div class="two-col">
+    <div class="chart-box">
+        <h3>Books issued, last six months</h3>
+        <canvas id="loansChart" aria-label="Bar chart of books issued per month" role="img"></canvas>
+    </div>
+    <div class="chart-box">
+        <h3>Titles by category</h3>
+        <canvas id="categoryChart" aria-label="Doughnut chart of titles per category" role="img"></canvas>
+    </div>
+</div>
+
+<h2>Overdue now</h2>
+{% if overdue_loans %}
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Book</th><th>Member</th><th>Status</th><th class="num">Fine so far</th><th></th></tr></thead>
+    <tbody>
+    {% for loan in overdue_loans %}
+        <tr>
+            <td><a href="{{ loan.book.get_absolute_url }}">{{ loan.book.title }}</a></td>
+            <td><a href="{% url 'member_detail' loan.member.pk %}">{{ loan.member.username }}</a></td>
+            <td>{% include 'includes/stamp.html' %}</td>
+            <td class="num">Rs. {{ loan.current_fine }}</td>
+            <td class="right"><form class="inline" method="post" action="{% url 'return_loan' loan.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn small" type="submit">Return</button></form></td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}<p class="muted">Nothing is overdue.</p>{% endif %}
+
+<h2 style="margin-top: 32px">Latest loans</h2>
+{% if recent_loans %}
+<div class="table-wrap">
+<table>
+    <tbody>
+    {% for loan in recent_loans %}
+        <tr>
+            <td><a href="{{ loan.book.get_absolute_url }}">{{ loan.book.title }}</a></td>
+            <td>{{ loan.member.username }}</td>
+            <td>{{ loan.issued_on|date:"d M Y" }}</td>
+            <td>{% include 'includes/stamp.html' %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}<p class="muted">No loans yet. <a href="{% url 'issue_book' %}">Issue the first book.</a></p>{% endif %}
+
+<p class="actions"><a class="btn quiet" href="{% url 'loan_list' %}">All loans</a> <a class="btn quiet" href="{% url 'export_loans' %}">Download all loans (CSV)</a></p>
+
+{{ chart|json_script:"chart-data" }}
+{% endblock %}
+
+{% block scripts %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script>
+(function () {
+    if (typeof Chart === 'undefined') { return; }
+    var data = JSON.parse(document.getElementById('chart-data').textContent);
+    var ink = '#16213e', brass = '#b8862b';
+
+    new Chart(document.getElementById('loansChart'), {
+        type: 'bar',
+        data: { labels: data.months, datasets: [{ label: 'Books issued', data: data.loans, backgroundColor: ink, borderRadius: 2 }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { precision: 0 } } } }
+    });
+
+    var palette = ['#16213e', '#b8862b', '#2b3a67', '#26704f', '#8a6414', '#5b6578', '#a8261d', '#7a8bbd'];
+    new Chart(document.getElementById('categoryChart'), {
+        type: 'doughnut',
+        data: { labels: data.categories, datasets: [{ data: data.category_counts, backgroundColor: palette }] },
+        options: { plugins: { legend: { position: 'bottom' } } }
+    });
+})();
+</script>
+{% endblock %}

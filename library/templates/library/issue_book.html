@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block title %}Issue a book{% endblock %}
+
+{% block content %}
+<h1>Issue a book</h1>
+<p class="muted">Loans last {{ LOAN_PERIOD_DAYS }} days. A member can hold {{ MAX_ACTIVE_LOANS }} books at once, and overdue books cost Rs. {{ FINE_PER_DAY }} a day. Members with overdue books or unpaid fines cannot borrow.</p>
+
+<div class="panel narrow">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% include 'includes/form_fields.html' %}
+        <div class="actions">
+            <button class="btn brass" type="submit">Issue book</button>
+            <a href="{% url 'loan_list' %}">Cancel</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

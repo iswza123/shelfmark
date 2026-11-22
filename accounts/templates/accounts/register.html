@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block title %}Join{% endblock %}
+
+{% block content %}
+<h1>Join the library</h1>
+<p class="muted">Members can see their loans, due dates and fines. Librarians issue the books at the desk.</p>
+<div class="panel narrow">
+    <form method="post" novalidate>
+        {% csrf_token %}
+        {% include 'includes/form_fields.html' %}
+        <div class="actions">
+            <button class="btn" type="submit">Create account</button>
+            <a href="{% url 'login' %}">I already have an account</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

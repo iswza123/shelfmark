@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}{{ member.username }}{% endblock %}
+
+{% block content %}
+<h1>{{ member.get_full_name|default:member.username }}</h1>
+<p class="muted">{{ member.username }}{% if member.email %}, {{ member.email }}{% endif %}. Member since {{ member.date_joined|date:"d M Y" }}.</p>
+
+{% if standing.total_owed %}<div class="owed"><strong>Owes Rs. {{ standing.total_owed }}</strong>{% if standing.accruing_fines %} (Rs. {{ standing.accruing_fines }} still building on overdue books){% endif %}</div>{% endif %}
+
+<p>{{ standing.active_count }} of {{ MAX_ACTIVE_LOANS }} books out.
+    <a class="btn brass small" href="{% url 'issue_book' %}">Issue a book</a></p>
+
+<h2>Loan history</h2>
+{% if loans %}
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Book</th><th>Issued</th><th>Status</th><th class="num">Fine</th><th></th></tr></thead>
+    <tbody>
+    {% for loan in loans %}
+        <tr>
+            <td><a href="{{ loan.book.get_absolute_url }}">{{ loan.book.title }}</a></td>
+            <td>{{ loan.issued_on|date:"d M Y" }}</td>
+            <td>{% include 'includes/stamp.html' %}</td>
+            <td class="num">{% if loan.current_fine %}Rs. {{ loan.current_fine }}{% if loan.fine_paid %} <span class="muted small">paid</span>{% endif %}{% else %}<span class="muted">none</span>{% endif %}</td>
+            <td class="right">
+                {% if not loan.is_returned %}
+                <form class="inline" method="post" action="{% url 'return_loan' loan.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn small" type="submit">Return</button></form>
+                {% elif loan.fine > 0 and not loan.fine_paid %}
+                <form class="inline" method="post" action="{% url 'mark_fine_paid' loan.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn small brass" type="submit">Fine paid</button></form>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% else %}<p class="muted">This member has not borrowed anything yet.</p>{% endif %}
+{% endblock %}

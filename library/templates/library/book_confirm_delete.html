@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block title %}Delete {{ book.title }}{% endblock %}
+
+{% block content %}
+<h1>Delete this book?</h1>
+<div class="panel narrow">
+    <p><strong>{{ book.title }}</strong> by {{ book.author }}</p>
+    {% if loan_count %}
+        <p class="form-errors">This book has {{ loan_count }} loan record{{ loan_count|pluralize }}. To keep the lending history intact it cannot be deleted.</p>
+    {% else %}
+        <p>This cannot be undone.</p>
+    {% endif %}
+    <form method="post" class="actions">
+        {% csrf_token %}
+        {% if not loan_count %}<button class="btn danger" type="submit">Delete book</button>{% endif %}
+        <a href="{{ book.get_absolute_url }}">Back to the book</a>
+    </form>
+</div>
+{% endblock %}

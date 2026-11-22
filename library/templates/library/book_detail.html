@@ -1,0 +1,61 @@
+{% extends 'base.html' %}
+{% block title %}{{ book.title }}{% endblock %}
+
+{% block content %}
+<div class="book-head">
+    <div class="big-spine" style="--h: {{ book.spine_hue }}" aria-hidden="true"></div>
+    <div>
+        <h1>{{ book.title }}</h1>
+        <p class="lead muted">by {{ book.author }}</p>
+
+        <dl class="facts">
+            <dt>ISBN</dt><dd>{{ book.isbn }}</dd>
+            <dt>Category</dt><dd>{{ book.category.name|default:"Uncategorised" }}</dd>
+            {% if book.published_year %}<dt>Published</dt><dd>{{ book.published_year }}</dd>{% endif %}
+            <dt>Copies</dt>
+            <dd>
+                {% if book.available > 0 %}<strong style="color: var(--ok)">{{ book.available }} of {{ book.total_copies }} on the shelf</strong>
+                {% else %}<strong style="color: var(--warn)">All {{ book.total_copies }} cop{{ book.total_copies|pluralize:"y,ies" }} on loan</strong>{% endif %}
+            </dd>
+        </dl>
+
+        {% if book.description %}<p>{{ book.description|linebreaksbr }}</p>{% endif %}
+
+        {% if my_loan %}
+            <p>You have this book. {% include 'includes/stamp.html' with loan=my_loan %}</p>
+        {% endif %}
+
+        <div class="actions">
+            {% if user.is_staff %}
+                {% if book.available > 0 %}<a class="btn brass" href="{% url 'issue_book' %}?book={{ book.pk }}">Issue this book</a>{% endif %}
+                <a class="btn quiet" href="{% url 'book_update' book.pk %}">Edit</a>
+                <a class="btn quiet" href="{% url 'book_delete' book.pk %}">Delete</a>
+            {% elif user.is_authenticated %}
+                <span class="muted">Ask at the desk to borrow this book.</span>
+            {% else %}
+                <a class="btn" href="{% url 'login' %}?next={{ request.path }}">Log in to track your loans</a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+{% if user.is_staff %}
+<h2>Recent loans of this book</h2>
+{% if history %}
+<div class="table-wrap">
+    <table>
+        <thead><tr><th>Member</th><th>Issued</th><th>Status</th></tr></thead>
+        <tbody>
+        {% for loan in history %}
+            <tr>
+                <td><a href="{% url 'member_detail' loan.member.pk %}">{{ loan.member.username }}</a></td>
+                <td>{{ loan.issued_on|date:"d M Y" }}</td>
+                <td>{% include 'includes/stamp.html' %}</td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% else %}<p class="muted">This book has never been borrowed.</p>{% endif %}
+{% endif %}
+{% endblock %}

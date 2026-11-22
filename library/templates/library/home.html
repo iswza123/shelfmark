@@ -1,0 +1,45 @@
+{% extends 'base.html' %}
+{% block title %}Find a book{% endblock %}
+
+{% block content %}
+<section class="hero">
+    <div>
+        <h1>Every book in the library, one search away.</h1>
+        <p class="lead">{{ title_count }} title{{ title_count|pluralize }} and {{ copy_count }} cop{{ copy_count|pluralize:"y,ies" }} on the shelves. Search by title, author or ISBN, then ask at the desk to borrow.</p>
+
+        <form class="search" method="get" action="{% url 'book_list' %}" role="search">
+            <input type="text" name="q" placeholder="Title, author or ISBN" aria-label="Search the catalogue">
+            <button class="btn" type="submit">Search</button>
+        </form>
+
+        {% if categories %}
+        <div class="chips" aria-label="Browse by category">
+            {% for c in categories %}<a href="{% url 'book_list' %}?category={{ c.pk }}">{{ c.name }}</a>{% endfor %}
+        </div>
+        {% endif %}
+    </div>
+
+    {% if shelf %}
+    <div class="shelf" role="group" aria-label="Recently added books">
+        <div class="shelf-books">
+            {% for book in shelf %}
+            <a class="spine" href="{{ book.get_absolute_url }}" style="--h: {{ book.spine_hue }}; --ht: {{ book.spine_height }}px" title="{{ book.title }} by {{ book.author }}"><span>{{ book.title|truncatechars:28 }}</span></a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+</section>
+
+<h2>New on the shelf</h2>
+{% if new_books %}
+<ul class="catalog">
+    {% for book in new_books %}{% include 'includes/entry.html' %}{% endfor %}
+</ul>
+<p class="actions"><a class="btn quiet" href="{% url 'book_list' %}">Browse the full catalogue</a></p>
+{% else %}
+<div class="empty">
+    <p>The shelves are empty.</p>
+    {% if user.is_staff %}<a class="btn" href="{% url 'book_create' %}">Add the first book</a>{% endif %}
+</div>
+{% endif %}
+{% endblock %}

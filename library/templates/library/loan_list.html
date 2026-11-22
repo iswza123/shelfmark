@@ -1,0 +1,52 @@
+{% extends 'base.html' %}
+{% block title %}Loans{% endblock %}
+
+{% block content %}
+<h1>Loans</h1>
+
+<nav class="tabs" aria-label="Loan status">
+    {% for value, label in statuses %}
+    <a href="?status={{ value }}{% if q %}&amp;q={{ q|urlencode }}{% endif %}" {% if status == value %}aria-current="true"{% endif %}>{{ label }}</a>
+    {% endfor %}
+</nav>
+
+<form class="search" method="get">
+    <input type="hidden" name="status" value="{{ status }}">
+    <input type="text" name="q" value="{{ q }}" placeholder="Member, book title or ISBN" aria-label="Search loans">
+    <button class="btn" type="submit">Search</button>
+    <a href="{% url 'export_loans' %}?status={{ status }}&amp;q={{ q|urlencode }}">Download CSV</a>
+</form>
+
+<p class="count">{{ page_obj.paginator.count }} loan{{ page_obj.paginator.count|pluralize }}</p>
+
+{% if loans %}
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Book</th><th>Member</th><th>Issued</th><th>Status</th><th class="num">Fine</th><th></th></tr></thead>
+    <tbody>
+    {% for loan in loans %}
+        <tr>
+            <td><a href="{{ loan.book.get_absolute_url }}">{{ loan.book.title }}</a></td>
+            <td><a href="{% url 'member_detail' loan.member.pk %}">{{ loan.member.username }}</a></td>
+            <td>{{ loan.issued_on|date:"d M Y" }}</td>
+            <td>{% include 'includes/stamp.html' %}</td>
+            <td class="num">
+                {% if loan.current_fine %}Rs. {{ loan.current_fine }}{% if loan.is_returned and loan.fine_paid %} <span class="muted small">paid</span>{% endif %}{% else %}<span class="muted">none</span>{% endif %}
+            </td>
+            <td class="right">
+                {% if not loan.is_returned %}
+                <form class="inline" method="post" action="{% url 'return_loan' loan.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn small" type="submit">Return</button></form>
+                {% elif loan.fine > 0 and not loan.fine_paid %}
+                <form class="inline" method="post" action="{% url 'mark_fine_paid' loan.pk %}">{% csrf_token %}<input type="hidden" name="next" value="{{ request.get_full_path }}"><button class="btn small brass" type="submit">Fine paid</button></form>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% include 'includes/pagination.html' %}
+{% else %}
+<div class="empty">No loans match this view.</div>
+{% endif %}
+{% endblock %}

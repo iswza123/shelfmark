@@ -1,0 +1,28 @@
+{% extends 'base.html' %}
+{% block title %}Catalogue{% endblock %}
+
+{% block content %}
+<h1>Catalogue</h1>
+
+<form class="search" method="get" role="search">
+    <input type="text" name="q" value="{{ q }}" placeholder="Title, author or ISBN" aria-label="Search">
+    <select name="category" aria-label="Category">
+        <option value="">All categories</option>
+        {% for c in categories %}<option value="{{ c.pk }}" {% if selected_category == c.pk|stringformat:"s" %}selected{% endif %}>{{ c.name }}</option>{% endfor %}
+    </select>
+    <label class="check"><input type="checkbox" name="available" value="1" {% if only_available %}checked{% endif %}> Available now</label>
+    <button class="btn" type="submit">Search</button>
+    {% if q or selected_category or only_available %}<a href="{% url 'book_list' %}">Clear</a>{% endif %}
+</form>
+
+<p class="count">{{ page_obj.paginator.count }} book{{ page_obj.paginator.count|pluralize }} found</p>
+
+{% if books %}
+<ul class="catalog">
+    {% for book in books %}{% include 'includes/entry.html' %}{% endfor %}
+</ul>
+{% include 'includes/pagination.html' %}
+{% else %}
+<div class="empty">No books match that search. Try fewer words or clear the filters.</div>
+{% endif %}
+{% endblock %}

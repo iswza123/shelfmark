@@ -1,0 +1,33 @@
+{% extends 'base.html' %}
+{% block title %}Members{% endblock %}
+
+{% block content %}
+<h1>Members</h1>
+
+<form class="search" method="get">
+    <input type="text" name="q" value="{{ q }}" placeholder="Name, username or email" aria-label="Search members">
+    <button class="btn" type="submit">Search</button>
+    {% if q %}<a href="{% url 'member_list' %}">Clear</a>{% endif %}
+</form>
+
+{% if members %}
+<div class="table-wrap">
+<table>
+    <thead><tr><th>Member</th><th>Email</th><th class="num">Books out</th><th class="num">Unpaid fines</th></tr></thead>
+    <tbody>
+    {% for m in members %}
+        <tr>
+            <td><a href="{% url 'member_detail' m.pk %}">{{ m.get_full_name|default:m.username }}</a>{% if m.get_full_name %} <span class="muted small">{{ m.username }}</span>{% endif %}</td>
+            <td>{{ m.email|default:"-" }}</td>
+            <td class="num">{{ m.on_loan }}</td>
+            <td class="num">{% if m.unpaid %}Rs. {{ m.unpaid }}{% else %}<span class="muted">none</span>{% endif %}</td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+</div>
+{% include 'includes/pagination.html' %}
+{% else %}
+<div class="empty">No members found.</div>
+{% endif %}
+{% endblock %}

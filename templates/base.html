@@ -1,0 +1,61 @@
+{% load static %}<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>{% block title %}Library{% endblock %} - Shelfmark</title>
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+</head>
+<body>
+
+{% with current=request.resolver_match.url_name %}
+<header class="topbar">
+    <div class="wrap">
+        <a class="brand" href="{% url 'home' %}">Shelfmark</a>
+
+        <nav class="nav" aria-label="Main">
+            <a href="{% url 'book_list' %}" {% if current == 'book_list' or current == 'book_detail' %}aria-current="page"{% endif %}>Catalogue</a>
+
+            {% if user.is_authenticated %}
+                {% if user.is_staff %}
+                    <a href="{% url 'dashboard' %}" {% if current == 'dashboard' %}aria-current="page"{% endif %}>Desk</a>
+                    <a href="{% url 'issue_book' %}" {% if current == 'issue_book' %}aria-current="page"{% endif %}>Issue a book</a>
+                    <a href="{% url 'loan_list' %}" {% if current == 'loan_list' %}aria-current="page"{% endif %}>Loans</a>
+                    <a href="{% url 'member_list' %}" {% if current == 'member_list' or current == 'member_detail' %}aria-current="page"{% endif %}>Members</a>
+                    <a href="{% url 'book_create' %}" {% if current == 'book_create' %}aria-current="page"{% endif %}>Add a book</a>
+                {% else %}
+                    <a href="{% url 'my_loans' %}" {% if current == 'my_loans' %}aria-current="page"{% endif %}>My loans</a>
+                {% endif %}
+
+                <a href="{% url 'password_change' %}" {% if current == 'password_change' %}aria-current="page"{% endif %}>Password</a>
+
+                <form method="post" action="{% url 'logout' %}">
+                    {% csrf_token %}
+                    <button type="submit">Log out ({{ user.username }})</button>
+                </form>
+            {% else %}
+                <a href="{% url 'login' %}" {% if current == 'login' %}aria-current="page"{% endif %}>Log in</a>
+                <a href="{% url 'register' %}" {% if current == 'register' %}aria-current="page"{% endif %}>Join</a>
+            {% endif %}
+        </nav>
+    </div>
+</header>
+{% endwith %}
+
+<main class="wrap">
+    {% if messages %}
+    <ul class="messages" role="status">
+        {% for message in messages %}<li class="{{ message.tags }}">{{ message }}</li>{% endfor %}
+    </ul>
+    {% endif %}
+
+    {% block content %}{% endblock %}
+</main>
+
+<footer class="site">
+    <div class="wrap">Shelfmark library management. Loans last {{ LOAN_PERIOD_DAYS }} days, overdue books cost Rs. {{ FINE_PER_DAY }} a day.</div>
+</footer>
+
+{% block scripts %}{% endblock %}
+</body>
+</html>
